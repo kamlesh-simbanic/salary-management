@@ -1,0 +1,21 @@
+# Render Blueprint: describes the API service. Secrets (marked sync: false) are entered in the Render dashboard.
+services:
+  - type: web
+    name: salary-management-api
+    runtime: node
+    plan: free
+    rootDir: .
+    # devDependencies are needed to compile TypeScript.
+    buildCommand: npm ci --include=dev && npm run build -w apps/api
+    # Applies any pending migrations, then starts the server.
+    startCommand: npm run start:prod -w apps/api
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 20
+      - key: DATABASE_SSL
+        value: 'true'
+      - key: DATABASE_URL
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
