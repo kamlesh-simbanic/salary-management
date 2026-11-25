@@ -52,3 +52,59 @@ describe('EmployeeService', () => {
     expect(page.items).toHaveLength(2);
   });
 });
+
+describe('EmployeeService.importCsv', () => {
+  const HEADER =
+    'fullName,email,jobTitle,department,countryCode,currencyCode,annualSalary,hireDate';
+  const row = (email: string, currency = 'INR') =>
+    `Asha Rao,${email},Software Engineer,Engineering,IN,${currency},1500000,2022-04-01`;
+  const file = (...rows: string[]) => [HEADER, ...rows].join('\n');
+  let service: EmployeeService;
+
+  beforeEach(() => {
+    service = new EmployeeService(new InMemoryEmployeeRepository());
+  });
+
+  it('imports valid rows and reports invalid ones without blocking the rest', async () => {
+    const result = await service.importCsv(
+      file(row('a@x.io'), 'Bad,bad-email,QA,Eng,IN,INR,1,2022-01-01', row('b@x.io')),
+    );
+
+    expect(result).toMatchObject({ totalRows: 3, imported: 2, skipped: 1, errorsTruncated: false });
+    expect(result.errors[0]?.row).toBe(3);
+    expect(
+      (await service.list({ page: 1, pageSize: 10, sort: 'fullName', order: 'asc' })).total,
+    ).toBe(2);
+  });
+
+  it('skips rows whose email already exists in the database', async () => {
+    await service.create(anEmployee({ email: 'a@x.io' }));
+
+    const result = await service.importCsv(file(row('a@x.io'), row('b@x.io')));
+
+    expect(result.imported).toBe(1);
+    expect(result.errors).toEqual([{ row: 2, message: 'email: a@x.io already exists' }]);
+  });
+
+  it('skips rows with a currency that has no exchange rate', async () => {
+    const result = await service.importCsv(file(row('a@x.io', 'XYZ'), row('b@x.io')));
+
+    expect(result.imported).toBe(1);
+    expect(result.errors[0]?.message).toMatch(/no exchange rate for XYZ/);
+  });
+
+  it('imports nothing and says so when every row is invalid', async () => {
+    const result = await service.importCsv(file(row('a@x.io', 'XYZ')));
+
+    expect(result).toMatchObject({ imported: 0, skipped: 1 });
+  });
+
+  it('caps the error list but still reports the true skipped count', async () => {
+    const rows = Array.from({ length: 250 }, (_, i) => row(`u${i}@x.io`, 'XYZ'));
+
+    const result = await service.importCsv(file(...rows));
+
+    expect(result).toMatchObject({ skipped: 250, errorsTruncated: true });
+    expect(result.errors).toHaveLength(200);
+  });
+});

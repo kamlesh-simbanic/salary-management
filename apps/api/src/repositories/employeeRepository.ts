@@ -14,6 +14,10 @@ export interface EmployeeRepository {
   /** Returns null if the employee doesn't exist. Throws ConflictError on a duplicate email. */
   update(id: number, input: EmployeeInput): Promise<Employee | null>;
   delete(id: number): Promise<boolean>;
+  /** Which of these emails already belong to an employee (used by the CSV import). */
+  findExistingEmails(emails: string[]): Promise<Set<string>>;
+  /** Inserts all rows or none (single transaction). Returns the number inserted. */
+  createMany(inputs: EmployeeInput[]): Promise<number>;
   currencyExists(code: string): Promise<boolean>;
   filterOptions(): Promise<FilterOptions>;
 }

@@ -15,6 +15,14 @@ const withRate = [
   { model: CurrencyRate, as: 'currencyRate', required: true, attributes: ['rateToUsd'] },
 ];
 
+const BATCH_SIZE = 1000;
+
+function chunks<T>(items: T[], size: number): T[][] {
+  const out: T[][] = [];
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size));
+  return out;
+}
+
 // LIKE treats % and _ as wildcards; escape them so a search for "50%" means the literal text.
 const escapeLike = (text: string) => text.replace(/[\\%_]/g, '\\$&');
 
@@ -103,6 +111,32 @@ export class SequelizeEmployeeRepository implements EmployeeRepository {
 
   async delete(id: number) {
     return (await EmployeeModel.destroy({ where: { id } })) > 0;
+  }
+
+  async findExistingEmails(emails: string[]) {
+    const existing = new Set<string>();
+    for (const chunk of chunks(emails, BATCH_SIZE)) {
+      const rows = await EmployeeModel.findAll({
+        where: { email: { [Op.in]: chunk } },
+        attributes: ['email'],
+      });
+      rows.forEach((r) => existing.add(r.email));
+    }
+    return existing;
+  }
+
+  async createMany(inputs: EmployeeInput[]) {
+    try {
+      await EmployeeModel.sequelize!.transaction(async (transaction) => {
+        for (const chunk of chunks(inputs, BATCH_SIZE)) {
+          await EmployeeModel.bulkCreate(chunk.map(toColumns), { transaction });
+        }
+      });
+    } catch (err) {
+      // Another request may have added one of these emails after we checked; the whole batch rolls back.
+      throw translateUniqueError(err, 'in this file');
+    }
+    return inputs.length;
   }
 
   async currencyExists(code: string) {

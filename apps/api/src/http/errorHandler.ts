@@ -26,6 +26,12 @@ export const errorHandler: ErrorRequestHandler = (err, _req, res, _next) => {
       .json({ error: { code: 'BAD_JSON', message: 'Request body is not valid JSON' } });
     return;
   }
+  if (err?.type === 'entity.too.large') {
+    res.status(413).json({
+      error: { code: 'PAYLOAD_TOO_LARGE', message: 'The file is too large (limit 5 MB)' },
+    });
+    return;
+  }
   console.error(err);
   res.status(500).json({ error: { code: 'INTERNAL', message: 'Something went wrong' } });
 };

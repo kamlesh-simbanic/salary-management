@@ -32,6 +32,14 @@ export class InMemoryEmployeeRepository implements EmployeeRepository {
   async delete(id: number) {
     return this.rows.delete(id);
   }
+  async findExistingEmails(emails: string[]) {
+    const taken = new Set([...this.rows.values()].map((e) => e.email));
+    return new Set(emails.filter((e) => taken.has(e)));
+  }
+  async createMany(inputs: EmployeeInput[]) {
+    for (const input of inputs) await this.create(input);
+    return inputs.length;
+  }
   async currencyExists(code: string) {
     return this.currencies.includes(code);
   }

@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import express, { Router } from 'express';
 import { z } from 'zod';
 import { employeeInputSchema, employeeListQuerySchema } from '../domain/employee.js';
+import { ValidationError } from '../errors.js';
 import type { EmployeeService } from '../services/employeeService.js';
 
 const idParam = z.coerce.number().int().positive();
@@ -10,6 +11,16 @@ export function employeeRoutes(service: EmployeeService): Router {
 
   router.get('/', async (req, res) => {
     res.json(await service.list(employeeListQuerySchema.parse(req.query)));
+  });
+
+  // The browser sends the file's text as the body (Content-Type: text/csv), which avoids a multipart dependency.
+  router.post('/import', express.text({ type: 'text/csv', limit: '5mb' }), async (req, res) => {
+    if (typeof req.body !== 'string') {
+      throw new ValidationError(
+        'Send the CSV file contents as the request body with Content-Type: text/csv',
+      );
+    }
+    res.json(await service.importCsv(req.body));
   });
 
   router.get('/:id', async (req, res) => {

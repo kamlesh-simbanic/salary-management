@@ -107,3 +107,32 @@ describe('SequelizeEmployeeRepository (MySQL)', () => {
     });
   });
 });
+
+describe('SequelizeEmployeeRepository bulk operations (MySQL)', () => {
+  let sequelize: Sequelize;
+  beforeAll(() => {
+    sequelize = connectTestDb();
+  });
+  afterAll(() => sequelize.close());
+  beforeEach(resetDb);
+
+  it('creates many rows and finds which emails already exist', async () => {
+    const inserted = await repo.createMany([
+      anEmployee({ email: 'a@x.io' }),
+      anEmployee({ email: 'b@x.io' }),
+    ]);
+
+    expect(inserted).toBe(2);
+    expect(await repo.findExistingEmails(['a@x.io', 'zzz@x.io'])).toEqual(new Set(['a@x.io']));
+  });
+
+  it('rolls back the whole batch if any row conflicts', async () => {
+    await insert(anEmployee({ email: 'taken@x.io' }));
+
+    await expect(
+      repo.createMany([anEmployee({ email: 'new@x.io' }), anEmployee({ email: 'taken@x.io' })]),
+    ).rejects.toBeInstanceOf(ConflictError);
+
+    expect((await repo.list(listQuery)).total).toBe(1); // 'new@x.io' was not kept
+  });
+});

@@ -83,3 +83,40 @@ describe('employee API', () => {
     expect(res.body.error.code).toBe('BAD_JSON');
   });
 });
+
+describe('POST /api/v1/employees/import', () => {
+  const csv =
+    'fullName,email,jobTitle,department,countryCode,currencyCode,annualSalary,hireDate\n' +
+    'Asha Rao,asha@acme.example,Software Engineer,Engineering,IN,INR,1500000,2022-04-01\n';
+  const makeApp = () =>
+    createApp({
+      employeeService: new EmployeeService(new InMemoryEmployeeRepository()),
+      insightsService: new InsightsService(fakeInsightsRepository()),
+    });
+
+  it('imports a text/csv body and returns a summary', async () => {
+    const res = await request(makeApp())
+      .post('/api/v1/employees/import')
+      .set('Content-Type', 'text/csv')
+      .send(csv);
+
+    expect(res.status).toBe(200);
+    expect(res.body).toMatchObject({ totalRows: 1, imported: 1, skipped: 0, errors: [] });
+  });
+
+  it('returns 400 when required columns are missing', async () => {
+    const res = await request(makeApp())
+      .post('/api/v1/employees/import')
+      .set('Content-Type', 'text/csv')
+      .send('a,b\n1,2');
+
+    expect(res.status).toBe(400);
+    expect(res.body.error.message).toMatch(/Missing required column/);
+  });
+
+  it('returns 400 when the body is not sent as text/csv', async () => {
+    const res = await request(makeApp()).post('/api/v1/employees/import').send({ hello: 'world' });
+
+    expect(res.status).toBe(400);
+  });
+});
