@@ -105,7 +105,7 @@ export class SequelizeInsightsRepository implements InsightsRepository {
     return rows.map((r) => ({ bucket: Number(r.bucket), count: Number(r.cnt) }));
   }
 
-  async outlierCandidates(filters: { country?: string; department?: string }) {
+  async outlierCandidates(filters: InsightFilters) {
     // Peer groups are computed over ALL employees; filters only narrow which people are reported.
     const { where, replacements } = filterClause(filters, 'r2');
     const rows = await this.db.query<Record<string, unknown>>(

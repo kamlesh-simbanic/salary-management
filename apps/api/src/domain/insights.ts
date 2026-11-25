@@ -21,8 +21,7 @@ export const distributionQuerySchema = z.object({
 });
 export const outliersQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(500).default(100),
-  country: filterShape.country,
-  department: filterShape.department,
+  ...filterShape,
 });
 
 export type InsightFilters = { country?: string; department?: string; jobTitle?: string };

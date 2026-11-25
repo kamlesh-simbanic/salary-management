@@ -27,7 +27,7 @@ export class InsightsService {
   }
 
   async outliers(
-    filters: { country?: string; department?: string },
+    filters: InsightFilters,
     limit: number,
   ): Promise<{ total: number; items: Outlier[] }> {
     const candidates = await this.repo.outlierCandidates(filters);

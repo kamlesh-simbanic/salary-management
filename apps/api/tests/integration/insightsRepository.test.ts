@@ -124,6 +124,13 @@ describe('SequelizeInsightsRepository (MySQL)', () => {
       expect(await repo.outlierCandidates({})).toEqual([]);
     });
 
+    it('can narrow the report to one job title', async () => {
+      for (const [i, salary] of [10, 20, 30, 40, 100].entries()) await usd(salary, i);
+
+      expect(await repo.outlierCandidates({ jobTitle: 'Software Engineer' })).toHaveLength(1);
+      expect(await repo.outlierCandidates({ jobTitle: 'Accountant' })).toEqual([]);
+    });
+
     it('keeps peer groups complete when a filter narrows the report', async () => {
       for (const [i, salary] of [10, 20, 30, 40, 100].entries())
         await usd(salary, i, { department: i === 4 ? 'Sales' : 'Engineering' });
