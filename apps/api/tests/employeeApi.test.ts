@@ -2,6 +2,8 @@ import request from 'supertest';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { createApp } from '../src/app.js';
 import { EmployeeService } from '../src/services/employeeService.js';
+import { InsightsService } from '../src/services/insightsService.js';
+import { fakeInsightsRepository } from './support/fakeInsightsRepository.js';
 import { InMemoryEmployeeRepository } from './support/inMemoryEmployeeRepository.js';
 import { anEmployee } from './support/builders.js';
 
@@ -10,7 +12,10 @@ describe('employee API', () => {
   let app: ReturnType<typeof createApp>;
 
   beforeEach(() => {
-    app = createApp({ employeeService: new EmployeeService(new InMemoryEmployeeRepository()) });
+    app = createApp({
+      employeeService: new EmployeeService(new InMemoryEmployeeRepository()),
+      insightsService: new InsightsService(fakeInsightsRepository()),
+    });
   });
 
   it('GET /health reports the service is up', async () => {
