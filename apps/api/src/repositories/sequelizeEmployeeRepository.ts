@@ -1,4 +1,13 @@
-import { Op, UniqueConstraintError, literal, type Order, type WhereOptions } from 'sequelize';
+import {
+  Op,
+  UniqueConstraintError,
+  col,
+  fn,
+  literal,
+  where as sqlWhere,
+  type Order,
+  type WhereOptions,
+} from 'sequelize';
 import { toUsd } from '../domain/currency.js';
 import type {
   Employee,
@@ -52,8 +61,13 @@ function buildWhere(query: EmployeeListQuery): WhereOptions {
   if (query.department) where.department = query.department;
   if (query.jobTitle) where.jobTitle = query.jobTitle;
   if (query.q) {
-    const pattern = `%${escapeLike(query.q)}%`;
-    where[Op.or] = [{ fullName: { [Op.like]: pattern } }, { email: { [Op.like]: pattern } }];
+    // Lower-case both sides so the search is case-insensitive whatever the database's collation is
+    // (MySQL's default is insensitive, TiDB's is case-sensitive; found by running the tests on TiDB).
+    const pattern = `%${escapeLike(query.q.toLowerCase())}%`;
+    where[Op.or] = [
+      sqlWhere(fn('LOWER', col('Employee.full_name')), { [Op.like]: pattern }),
+      sqlWhere(fn('LOWER', col('Employee.email')), { [Op.like]: pattern }),
+    ];
   }
   return where;
 }

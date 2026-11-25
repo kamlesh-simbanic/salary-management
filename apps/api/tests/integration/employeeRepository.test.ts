@@ -43,11 +43,12 @@ describe('SequelizeEmployeeRepository (MySQL)', () => {
     expect(items[0]?.email).toBe('a@x.io');
   });
 
-  it('searches name or email and treats % literally', async () => {
+  it('searches name or email, ignoring case, and treats % literally', async () => {
     await insert(anEmployee({ email: 'priya@x.io', fullName: 'Priya Nair' }));
     await insert(anEmployee({ email: 'tom@x.io', fullName: 'Tom 50% Smith' }));
 
     expect((await repo.list({ ...listQuery, q: 'nair' })).total).toBe(1);
+    expect((await repo.list({ ...listQuery, q: 'PRIYA' })).total).toBe(1); // any letter case, on any collation
     expect((await repo.list({ ...listQuery, q: 'tom@' })).total).toBe(1);
     expect((await repo.list({ ...listQuery, q: '%' })).total).toBe(1);
   });
