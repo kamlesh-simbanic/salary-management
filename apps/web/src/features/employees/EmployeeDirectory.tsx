@@ -1,12 +1,30 @@
-import { Alert, Button } from '@mui/material';
+import AddIcon from '@mui/icons-material/Add';
+import { Alert, Box, Button, Snackbar } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
-import { getFilterOptions } from '../../api/employees';
-import type { EmployeeListParams, FilterOptions, SortField } from '../../api/types';
+import {
+  createEmployee,
+  deleteEmployee,
+  getCurrencies,
+  getFilterOptions,
+  updateEmployee,
+} from '../../api/employees';
+import type {
+  Employee,
+  EmployeeInput,
+  EmployeeListParams,
+  FilterOptions,
+  SortField,
+} from '../../api/types';
+import { DeleteEmployeeDialog } from './DeleteEmployeeDialog';
 import { EmployeeFilters } from './EmployeeFilters';
+import { EmployeeFormDialog } from './EmployeeFormDialog';
 import { EmployeeTable } from './EmployeeTable';
 import { useEmployees } from './useEmployees';
 
 const SEARCH_DEBOUNCE_MS = 300;
+
+type Dialog =
+  { kind: 'form'; employee: Employee | null } | { kind: 'delete'; employee: Employee } | null;
 
 const INITIAL: EmployeeListParams = {
   page: 1,
@@ -24,14 +42,21 @@ export function EmployeeDirectory() {
   const [search, setSearch] = useState('');
   const [options, setOptions] = useState<FilterOptions | null>(null);
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const [currencies, setCurrencies] = useState<string[]>([]);
+  const [dialog, setDialog] = useState<Dialog>(null);
+  const [toast, setToast] = useState<string>();
   const { data, loading, error, reload } = useEmployees(params);
 
-  useEffect(() => {
-    const controller = new AbortController();
-    getFilterOptions(controller.signal)
+  const loadOptions = () =>
+    getFilterOptions()
       .then(setOptions)
       .catch(() => undefined); // dropdowns just stay empty
-    return () => controller.abort();
+
+  useEffect(() => {
+    loadOptions();
+    getCurrencies()
+      .then(setCurrencies)
+      .catch(() => undefined);
   }, []);
 
   useEffect(() => () => clearTimeout(searchTimer.current), []);
@@ -58,6 +83,26 @@ export function EmployeeDirectory() {
       page: 1,
     }));
 
+  // After a change, close the dialog, tell the user, refresh the table and the dropdowns (a new department may exist now).
+  const afterMutation = (message: string) => {
+    setDialog(null);
+    setToast(message);
+    reload();
+    loadOptions();
+  };
+
+  const save = async (input: EmployeeInput) => {
+    const editing = dialog?.kind === 'form' ? dialog.employee : null;
+    if (editing) await updateEmployee(editing.id, input);
+    else await createEmployee(input);
+    afterMutation(editing ? 'Employee updated' : 'Employee added');
+  };
+
+  const remove = async (employee: Employee) => {
+    await deleteEmployee(employee.id);
+    afterMutation(`${employee.fullName} deleted`);
+  };
+
   const hasActiveFilters = Boolean(
     search || params.country || params.department || params.jobTitle,
   );
@@ -69,6 +114,15 @@ export function EmployeeDirectory() {
 
   return (
     <>
+      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 2 }}>
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
+          onClick={() => setDialog({ kind: 'form', employee: null })}
+        >
+          Add employee
+        </Button>
+      </Box>
       <EmployeeFilters
         search={search}
         onSearchChange={changeSearch}
@@ -99,8 +153,32 @@ export function EmployeeDirectory() {
         loading={loading}
         params={params}
         onSort={toggleSort}
+        onEdit={(employee) => setDialog({ kind: 'form', employee })}
+        onDelete={(employee) => setDialog({ kind: 'delete', employee })}
         onPageChange={(page) => setParams((p) => ({ ...p, page }))}
         onPageSizeChange={(pageSize) => changeFilters({ pageSize })}
+      />
+      {dialog?.kind === 'form' && (
+        <EmployeeFormDialog
+          employee={dialog.employee}
+          options={options}
+          currencies={currencies}
+          onClose={() => setDialog(null)}
+          onSubmit={save}
+        />
+      )}
+      {dialog?.kind === 'delete' && (
+        <DeleteEmployeeDialog
+          employee={dialog.employee}
+          onClose={() => setDialog(null)}
+          onConfirm={() => remove(dialog.employee)}
+        />
+      )}
+      <Snackbar
+        open={Boolean(toast)}
+        autoHideDuration={4000}
+        onClose={() => setToast(undefined)}
+        message={toast}
       />
     </>
   );

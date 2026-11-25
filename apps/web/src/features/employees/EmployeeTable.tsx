@@ -1,5 +1,6 @@
 import {
   Box,
+  IconButton,
   LinearProgress,
   Paper,
   Table,
@@ -10,8 +11,11 @@ import {
   TablePagination,
   TableRow,
   TableSortLabel,
+  Tooltip,
   Typography,
 } from '@mui/material';
+import DeleteOutlined from '@mui/icons-material/DeleteOutlined';
+import EditOutlined from '@mui/icons-material/EditOutlined';
 import type { Employee, EmployeeListParams, SortField } from '../../api/types';
 import { countryName, formatMoney } from '../../lib/format';
 
@@ -36,6 +40,8 @@ interface Props {
   loading: boolean;
   params: EmployeeListParams;
   onSort: (field: SortField) => void;
+  onEdit: (employee: Employee) => void;
+  onDelete: (employee: Employee) => void;
   onPageChange: (page: number) => void; // 1-based
   onPageSizeChange: (pageSize: number) => void;
 }
@@ -46,6 +52,8 @@ export function EmployeeTable({
   loading,
   params,
   onSort,
+  onEdit,
+  onDelete,
   onPageChange,
   onPageSizeChange,
 }: Props) {
@@ -71,6 +79,9 @@ export function EmployeeTable({
                   </TableSortLabel>
                 </TableCell>
               ))}
+              <TableCell align="right" sx={{ width: 100 }}>
+                Actions
+              </TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
@@ -94,11 +105,31 @@ export function EmployeeTable({
                     </Typography>
                   )}
                 </TableCell>
+                <TableCell align="right" sx={{ whiteSpace: 'nowrap' }}>
+                  <Tooltip title="Edit">
+                    <IconButton
+                      size="small"
+                      aria-label={`Edit ${e.fullName}`}
+                      onClick={() => onEdit(e)}
+                    >
+                      <EditOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Delete">
+                    <IconButton
+                      size="small"
+                      aria-label={`Delete ${e.fullName}`}
+                      onClick={() => onDelete(e)}
+                    >
+                      <DeleteOutlined fontSize="small" />
+                    </IconButton>
+                  </Tooltip>
+                </TableCell>
               </TableRow>
             ))}
             {!loading && employees.length === 0 && (
               <TableRow>
-                <TableCell colSpan={COLUMNS.length} align="center" sx={{ py: 6 }}>
+                <TableCell colSpan={COLUMNS.length + 1} align="center" sx={{ py: 6 }}>
                   No employees match these filters.
                 </TableCell>
               </TableRow>
