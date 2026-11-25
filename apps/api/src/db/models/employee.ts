@@ -4,8 +4,10 @@ import {
   type CreationOptional,
   type InferAttributes,
   type InferCreationAttributes,
+  type NonAttribute,
   type Sequelize,
 } from 'sequelize';
+import type { CurrencyRate } from './currencyRate.js';
 
 export class Employee extends Model<InferAttributes<Employee>, InferCreationAttributes<Employee>> {
   declare id: CreationOptional<number>;
@@ -19,6 +21,7 @@ export class Employee extends Model<InferAttributes<Employee>, InferCreationAttr
   declare hireDate: string; // DATEONLY -> "YYYY-MM-DD"
   declare createdAt: CreationOptional<Date>;
   declare updatedAt: CreationOptional<Date>;
+  declare currencyRate?: NonAttribute<CurrencyRate>; // present when the query includes the join
 }
 
 export function initEmployee(sequelize: Sequelize): void {

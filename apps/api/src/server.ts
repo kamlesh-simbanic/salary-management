@@ -1,7 +1,14 @@
 import { createApp } from './app.js';
+import { loadEnv } from './config/env.js';
+import { createSequelize } from './db/sequelize.js';
+import { SequelizeEmployeeRepository } from './repositories/sequelizeEmployeeRepository.js';
+import { EmployeeService } from './services/employeeService.js';
 
-const port = Number(process.env.PORT ?? 4000);
+// Composition root: the only place where concrete implementations are wired together.
+const env = loadEnv();
+createSequelize(env.DATABASE_URL);
+const employeeService = new EmployeeService(new SequelizeEmployeeRepository());
 
-createApp().listen(port, () => {
-  console.log(`API listening on http://localhost:${port}`);
+createApp({ employeeService }).listen(env.PORT, () => {
+  console.log(`API listening on http://localhost:${env.PORT}`);
 });

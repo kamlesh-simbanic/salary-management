@@ -1,7 +1,14 @@
 import express from 'express';
+import { errorHandler } from './http/errorHandler.js';
+import { employeeRoutes } from './http/employeeRoutes.js';
+import type { EmployeeService } from './services/employeeService.js';
 
-// The app is built by a factory so tests can create it without opening a port.
-export function createApp(): express.Express {
+export interface AppDeps {
+  employeeService: EmployeeService;
+}
+
+// Built by a factory with injected services so tests can create it without a port or a database.
+export function createApp({ employeeService }: AppDeps): express.Express {
   const app = express();
   app.use(express.json());
 
@@ -9,5 +16,11 @@ export function createApp(): express.Express {
     res.json({ status: 'ok' });
   });
 
+  app.get('/api/v1/meta/filters', async (_req, res) => {
+    res.json(await employeeService.filterOptions());
+  });
+  app.use('/api/v1/employees', employeeRoutes(employeeService));
+
+  app.use(errorHandler);
   return app;
 }
