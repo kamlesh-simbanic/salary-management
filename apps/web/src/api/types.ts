@@ -13,6 +13,9 @@ export interface Employee {
   hireDate: string; // YYYY-MM-DD
 }
 
+/** What the API accepts on create/update (an Employee without the server-computed fields). */
+export type EmployeeInput = Omit<Employee, 'id' | 'salaryUsd'>;
+
 export interface Page<T> {
   items: T[];
   page: number;
