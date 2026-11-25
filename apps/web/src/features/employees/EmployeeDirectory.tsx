@@ -3,23 +3,18 @@ import { Alert, Box, Button, Snackbar } from '@mui/material';
 import { useEffect, useRef, useState } from 'react';
 import {
   createEmployee,
+  listEmployees,
   deleteEmployee,
   getCurrencies,
-  getFilterOptions,
   updateEmployee,
 } from '../../api/employees';
-import type {
-  Employee,
-  EmployeeInput,
-  EmployeeListParams,
-  FilterOptions,
-  SortField,
-} from '../../api/types';
+import type { Employee, EmployeeInput, EmployeeListParams, SortField } from '../../api/types';
+import { useAsync } from '../../lib/useAsync';
+import { useFilterOptions } from '../../lib/useFilterOptions';
 import { DeleteEmployeeDialog } from './DeleteEmployeeDialog';
 import { EmployeeFilters } from './EmployeeFilters';
 import { EmployeeFormDialog } from './EmployeeFormDialog';
 import { EmployeeTable } from './EmployeeTable';
-import { useEmployees } from './useEmployees';
 
 const SEARCH_DEBOUNCE_MS = 300;
 
@@ -40,20 +35,14 @@ const INITIAL: EmployeeListParams = {
 export function EmployeeDirectory() {
   const [params, setParams] = useState(INITIAL);
   const [search, setSearch] = useState('');
-  const [options, setOptions] = useState<FilterOptions | null>(null);
+  const { options, refresh: refreshOptions } = useFilterOptions();
   const searchTimer = useRef<ReturnType<typeof setTimeout>>(undefined);
   const [currencies, setCurrencies] = useState<string[]>([]);
   const [dialog, setDialog] = useState<Dialog>(null);
   const [toast, setToast] = useState<string>();
-  const { data, loading, error, reload } = useEmployees(params);
-
-  const loadOptions = () =>
-    getFilterOptions()
-      .then(setOptions)
-      .catch(() => undefined); // dropdowns just stay empty
+  const { data, loading, error, reload } = useAsync(listEmployees, params);
 
   useEffect(() => {
-    loadOptions();
     getCurrencies()
       .then(setCurrencies)
       .catch(() => undefined);
@@ -88,7 +77,7 @@ export function EmployeeDirectory() {
     setDialog(null);
     setToast(message);
     reload();
-    loadOptions();
+    refreshOptions();
   };
 
   const save = async (input: EmployeeInput) => {

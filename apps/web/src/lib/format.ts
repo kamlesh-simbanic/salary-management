@@ -16,3 +16,16 @@ export function countryName(code: string): string {
     return code;
   }
 }
+
+/** 1_250_000 -> "$1.3M", 50_000 -> "$50k". For chart axes and tight spaces. */
+export function formatCompactUsd(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    notation: 'compact',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 1,
+  })
+    .format(amount)
+    .replace('K', 'k');
+}
