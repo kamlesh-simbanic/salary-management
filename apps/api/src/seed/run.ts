@@ -9,7 +9,8 @@ import { generateEmployees } from './generateEmployees.js';
 const count = Number(process.argv[2] ?? 10_000);
 const BATCH_SIZE = 1000;
 
-const sequelize = createSequelize(loadEnv().DATABASE_URL);
+const env = loadEnv();
+const sequelize = createSequelize(env.DATABASE_URL, { ssl: env.DATABASE_SSL });
 const started = Date.now();
 
 await sequelize.transaction(async (transaction) => {

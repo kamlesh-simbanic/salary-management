@@ -12,4 +12,25 @@ describe('loadEnv', () => {
   it('fails fast with a readable message when DATABASE_URL is missing', () => {
     expect(() => loadEnv({})).toThrow(/DATABASE_URL/);
   });
+
+  it('keeps TLS off by default and turns it on only for the exact value "true"', () => {
+    const base = { DATABASE_URL: 'mysql://u:p@localhost:3306/db' };
+
+    expect(loadEnv(base).DATABASE_SSL).toBe(false);
+    expect(loadEnv({ ...base, DATABASE_SSL: 'true' }).DATABASE_SSL).toBe(true);
+    expect(() => loadEnv({ ...base, DATABASE_SSL: 'yes' })).toThrow(/DATABASE_SSL/);
+  });
+
+  it('parses a comma-separated CORS_ORIGIN list and drops trailing slashes', () => {
+    const env = loadEnv({
+      DATABASE_URL: 'mysql://u:p@localhost:3306/db',
+      CORS_ORIGIN: 'https://app.vercel.app/, http://localhost:5173',
+    });
+
+    expect(env.CORS_ORIGIN).toEqual(['https://app.vercel.app', 'http://localhost:5173']);
+  });
+
+  it('allows no cross-origin callers when CORS_ORIGIN is unset', () => {
+    expect(loadEnv({ DATABASE_URL: 'mysql://u:p@localhost:3306/db' }).CORS_ORIGIN).toEqual([]);
+  });
 });

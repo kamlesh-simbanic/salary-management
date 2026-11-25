@@ -1,3 +1,4 @@
+import cors from 'cors';
 import express from 'express';
 import { errorHandler } from './http/errorHandler.js';
 import { employeeRoutes } from './http/employeeRoutes.js';
@@ -8,11 +9,19 @@ import type { InsightsService } from './services/insightsService.js';
 export interface AppDeps {
   employeeService: EmployeeService;
   insightsService: InsightsService;
+  /** Origins allowed to call the API from a browser (the deployed UI). Empty: no cross-origin access. */
+  corsOrigins?: string[];
 }
 
 // Built by a factory with injected services so tests can create it without a port or a database.
-export function createApp({ employeeService, insightsService }: AppDeps): express.Express {
+export function createApp({
+  employeeService,
+  insightsService,
+  corsOrigins = [],
+}: AppDeps): express.Express {
   const app = express();
+  // An explicit allow-list, never `*`: this API serves salary data.
+  if (corsOrigins.length > 0) app.use(cors({ origin: corsOrigins }));
   app.use(express.json());
 
   app.get('/health', (_req, res) => {

@@ -7,11 +7,12 @@ import type { EmployeeInput } from '../../src/domain/employee.js';
 import { SequelizeEmployeeRepository } from '../../src/repositories/sequelizeEmployeeRepository.js';
 
 export function connectTestDb(): Sequelize {
-  const url = loadEnv({ ...process.env, DATABASE_URL: process.env.TEST_DATABASE_URL }).DATABASE_URL;
+  const env = loadEnv({ ...process.env, DATABASE_URL: process.env.TEST_DATABASE_URL });
+  const url = env.DATABASE_URL;
   // Safety net: never let a test wipe the development database.
   if (!/test/i.test(new URL(url).pathname))
     throw new Error('TEST_DATABASE_URL must point to a *test* database');
-  return createSequelize(url);
+  return createSequelize(url, { ssl: env.DATABASE_SSL });
 }
 
 // Known, fixed rates so expected USD values in assertions are easy to check by hand.
