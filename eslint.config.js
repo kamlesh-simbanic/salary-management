@@ -8,7 +8,7 @@ export default tseslint.config(
   { ignores: ['**/dist', '**/node_modules', '**/coverage'] },
   js.configs.recommended,
   ...tseslint.configs.recommended,
-  { files: ['apps/api/**/*.ts'], languageOptions: { globals: globals.node } },
+  { files: ['apps/api/**/*.{ts,mjs}'], languageOptions: { globals: globals.node } },
   {
     files: ['apps/web/**/*.{ts,tsx}'],
     languageOptions: { globals: globals.browser },
