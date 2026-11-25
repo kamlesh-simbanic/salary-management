@@ -31,3 +31,20 @@ export function updateEmployee(id: number, input: EmployeeInput) {
 export function deleteEmployee(id: number) {
   return request<void>(`/employees/${id}`, { method: 'DELETE' });
 }
+
+export interface ImportResult {
+  totalRows: number;
+  imported: number;
+  skipped: number;
+  errors: { row: number; message: string }[]; // capped by the server
+  errorsTruncated: boolean;
+}
+
+/** The file's text is sent as the body; the API parses and validates it row by row. */
+export function importEmployees(csvText: string) {
+  return request<ImportResult>('/employees/import', {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/csv' },
+    body: csvText,
+  });
+}
