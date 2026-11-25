@@ -43,6 +43,9 @@ export class InMemoryEmployeeRepository implements EmployeeRepository {
   async currencyExists(code: string) {
     return this.currencies.includes(code);
   }
+  async currencyCodes() {
+    return [...this.currencies].sort();
+  }
   async filterOptions() {
     return { countries: [], departments: [], jobTitles: [] };
   }

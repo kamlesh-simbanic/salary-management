@@ -100,6 +100,7 @@ describe('SequelizeEmployeeRepository (MySQL)', () => {
 
     expect(await repo.currencyExists('INR')).toBe(true);
     expect(await repo.currencyExists('XYZ')).toBe(false);
+    expect(await repo.currencyCodes()).toEqual(['INR', 'USD']);
     expect(await repo.filterOptions()).toEqual({
       countries: ['IN', 'US'],
       departments: ['Engineering', 'Sales'],

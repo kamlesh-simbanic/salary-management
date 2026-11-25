@@ -73,6 +73,12 @@ describe('employee API', () => {
     expect(res.body).toMatchObject({ page: 1, pageSize: 10, total: 1, totalPages: 1 });
   });
 
+  it('GET /meta/currencies lists the currencies that have an exchange rate', async () => {
+    const res = await request(app).get('/api/v1/meta/currencies');
+
+    expect(res.body).toEqual({ currencies: ['INR', 'USD'] });
+  });
+
   it('returns 400 for malformed JSON', async () => {
     const res = await request(app)
       .post('/api/v1/employees')

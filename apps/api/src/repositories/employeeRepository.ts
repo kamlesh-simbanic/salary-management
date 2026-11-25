@@ -19,5 +19,7 @@ export interface EmployeeRepository {
   /** Inserts all rows or none (single transaction). Returns the number inserted. */
   createMany(inputs: EmployeeInput[]): Promise<number>;
   currencyExists(code: string): Promise<boolean>;
+  /** Currency codes that have an exchange rate, alphabetically. */
+  currencyCodes(): Promise<string[]>;
   filterOptions(): Promise<FilterOptions>;
 }

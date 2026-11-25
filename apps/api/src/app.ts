@@ -22,6 +22,9 @@ export function createApp({ employeeService, insightsService }: AppDeps): expres
   app.get('/api/v1/meta/filters', async (_req, res) => {
     res.json(await employeeService.filterOptions());
   });
+  app.get('/api/v1/meta/currencies', async (_req, res) => {
+    res.json({ currencies: await employeeService.currencies() });
+  });
   app.use('/api/v1/employees', employeeRoutes(employeeService));
 
   app.use('/api/v1/insights', insightsRoutes(insightsService));

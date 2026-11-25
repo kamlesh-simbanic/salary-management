@@ -93,6 +93,10 @@ export class EmployeeService {
     };
   }
 
+  currencies(): Promise<string[]> {
+    return this.repo.currencyCodes();
+  }
+
   filterOptions(): Promise<FilterOptions> {
     return this.repo.filterOptions();
   }

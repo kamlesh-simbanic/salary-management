@@ -143,6 +143,11 @@ export class SequelizeEmployeeRepository implements EmployeeRepository {
     return (await CurrencyRate.count({ where: { code } })) > 0;
   }
 
+  async currencyCodes() {
+    const rows = await CurrencyRate.findAll({ attributes: ['code'], order: [['code', 'ASC']] });
+    return rows.map((r) => r.code);
+  }
+
   async filterOptions(): Promise<FilterOptions> {
     const distinct = async (column: 'countryCode' | 'department' | 'jobTitle') => {
       const rows = await EmployeeModel.findAll({
