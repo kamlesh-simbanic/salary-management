@@ -2,7 +2,9 @@
 
 A web app that lets an HR Manager maintain salary records for ~10,000 employees across several countries and answer "how do we pay people?" without Excel pivot tables.
 
-> **Live demo:** _to be added after deployment_ &nbsp;|&nbsp; **Demo video:** _to be added_
+> **Live demo:** https://salary-management-green.vercel.app/ &nbsp;|&nbsp; **API:** https://salary-management-api-mt5f.onrender.com/health &nbsp;|&nbsp; **Demo video:** [watch on Google Drive](https://drive.google.com/file/d/1LTI2CAfEBAPP4SA6AllLvfXny5XQ6o1B/view?usp=sharing)
+>
+> The API runs on a free Render instance that sleeps after 15 minutes without traffic, so **the first request after a quiet period can take up to a minute**. The data is synthetic.
 
 ## What it does
 
@@ -51,6 +53,18 @@ npm run db:seed -w apps/api                  # about 1 second; safe to re-run, i
 npm run dev:api                              # http://localhost:4000
 npm run dev:web                              # http://localhost:5173 (proxies /api to the API)
 ```
+
+## Deployment
+
+| Piece    | Where                                               | Notes                                                                                                                                                                   |
+| -------- | --------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| UI       | Vercel, root directory `apps/web`                   | `VITE_API_URL` = the API's URL (baked in at build time). `apps/web/vercel.json` rewrites every path to `index.html` so deep links like `/insights` survive a refresh    |
+| API      | Render free web service, root directory = repo root | Build `npm ci --include=dev && npm run build -w apps/api`, start `npm run start:prod -w apps/api` (applies pending migrations, then starts). `render.yaml` describes it |
+| Database | TiDB Cloud Starter (MySQL-compatible)               | Requires TLS (`DATABASE_SSL=true`). Seeded once from a laptop with `npm run db:seed -w apps/api`                                                                        |
+
+API environment variables: `DATABASE_URL`, `DATABASE_SSL=true`, `CORS_ORIGIN` (the UI's exact origin; an explicit allow-list, never `*`), `NODE_VERSION=20`.
+
+Two things the hosted database taught me: TiDB's default collation is case-sensitive, which broke search until it was made collation-independent (found by running the integration suite against TiDB before deploying), and a cross-region database link needs a longer connect timeout than the driver's default.
 
 ## Tests and quality checks
 
